@@ -35,8 +35,14 @@ def fetch_ticker(self):
 
 		symbols.append(item["symbol"].replace("/", "").strip())
 
-	count, count2 = 0, 0
+	# count0: fetch data network failed times count
+	# count1: fetch check file network failed times count
+	# count2: data check failed times count
+	count0, count1, count2 = 0, 0, 0
+
+	# index of code now
 	code_index = 0
+	# the day data fetch now
 	date = arrow.get(self.base_time)
 	while True:
 		if date > end_time: return 0
@@ -46,18 +52,19 @@ def fetch_ticker(self):
 
 		url = f"https://data.binance.vision/data/futures/um/daily/trades/{code}/{code}-trades-{date.format('YYYY-MM-DD')}.zip"
 		resp = requests.get(url, proxies=self.ccxt_config['proxies'])
+		# check if resp fetch data success
 		if resp.status_code != 200:
 			time.sleep(10)
-			count += 1
-			if count < 10:
-				self.log.warning(f"""[{code}] ticker[{code}-trades-{date.format('YYYY-MM-DD')}.zip] don't exit or network error, try again[{count}]""", "")
+			count0 += 1
+			if count0 < 10:
+				self.log.warning(f"""[{code}] ticker[{code}-trades-{date.format('YYYY-MM-DD')}.zip] don't exit or network error, try again[{count0}]""", "")
 				resp.close()
 				continue
 
 			else:
-				self.log.warning(f"""[{code}] ticker[{code}-trades-{date.format('YYYY-MM-DD')}.zip] don't exit or network error, try failed""", "")
+				self.log.warning(f"""[{code}] ticker[{code}-trades-{date.format('YYYY-MM-DD')}.zip] don't exit or network error, try failed{count0}""", "\n")
 				code_index += 1
-				count, count2 = 0, 0
+				count0 = 0
 				if code_index >= len(symbols):
 					date = date.shift(days=1)
 					code_index = 0
@@ -69,19 +76,20 @@ def fetch_ticker(self):
 		checksum = hashlib.sha256(resp.content).hexdigest()
 		resp_cksum = requests.get(url + ".CHECKSUM", proxies=self.ccxt_config['proxies'])
 
+		# check if resp_cksum fetch check file[CHECKSUM] success
 		if resp_cksum.status_code != 200:
 			time.sleep(10)
-			count += 1
-			if count < 10:
-				self.log.warning(f"""[{code}] ticker[{code}-trades-{date.format('YYYY-MM-DD')}.zip.CHECKSUM] don't exit or network error, try again[{count}]""", "")
+			count1 += 1
+			if count1 < 10:
+				self.log.warning(f"""[{code}] ticker[{code}-trades-{date.format('YYYY-MM-DD')}.zip.CHECKSUM] don't exit or network error, try again[{count1}]""", "")
 				resp.close()
 				resp_cksum.close()
 				continue
 
 			else:
-				self.log.warning(f"""[{code}] ticker[{code}-trades-{date.format('YYYY-MM-DD')}.zip.CHECKSUM] don't exit or network error, try failed""", "")
+				self.log.warning(f"""[{code}] ticker[{code}-trades-{date.format('YYYY-MM-DD')}.zip.CHECKSUM] don't exit or network error, try failed{count1}""", "\n")
 				code_index += 1
-				count, count2 = 0, 0
+				count1 = 0
 				if code_index >= len(symbols):
 					date = date.shift(days=1)
 					code_index = 0
@@ -90,6 +98,7 @@ def fetch_ticker(self):
 				resp_cksum.close()
 				continue
 
+		# check if file has error in route
 		cksum = resp_cksum.text.split(" ")[0].strip()
 		filename = resp_cksum.text.split(" ")[-1].replace("\n", "").strip()
 		if not (filename == f'{code}-trades-{date.format("YYYY-MM-DD")}.zip' and checksum == cksum):
@@ -102,9 +111,9 @@ def fetch_ticker(self):
 				continue
 
 			else:
-				self.log.warning(f"""[{code}] ticker in {date.format('YYYY-MM-DD')} fetch error, try failed""", "")
+				self.log.warning(f"""[{code}] ticker in {date.format('YYYY-MM-DD')} fetch error, try failed{count2}""", "\n")
 				code_index += 1
-				count, count2 = 0, 0
+				count2 = 0
 				if code_index >= len(symbols):
 					date = date.shift(days=1)
 					code_index = 0
@@ -113,7 +122,8 @@ def fetch_ticker(self):
 				resp.close()
 				continue
 
-		count, count2 = 0, 0
+		# reset if success
+		count0, count1, count2 = 0, 0, 0
 
 		# save data
 		filepath = os.path.join(save_path, f'{code}')

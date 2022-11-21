@@ -57,6 +57,7 @@ def fetch_ticker(self):
 			else:
 				self.log.warning(f"""[{code}] ticker[{code}-trades-{date.format('YYYY-MM-DD')}.zip] don't exit or network error, try failed""", "")
 				code_index += 1
+				count, count2 = 0, 0
 				if code_index >= len(symbols):
 					date = date.shift(days=1)
 					code_index = 0
@@ -80,6 +81,7 @@ def fetch_ticker(self):
 			else:
 				self.log.warning(f"""[{code}] ticker[{code}-trades-{date.format('YYYY-MM-DD')}.zip.CHECKSUM] don't exit or network error, try failed""", "")
 				code_index += 1
+				count, count2 = 0, 0
 				if code_index >= len(symbols):
 					date = date.shift(days=1)
 					code_index = 0
@@ -102,6 +104,7 @@ def fetch_ticker(self):
 			else:
 				self.log.warning(f"""[{code}] ticker in {date.format('YYYY-MM-DD')} fetch error, try failed""", "")
 				code_index += 1
+				count, count2 = 0, 0
 				if code_index >= len(symbols):
 					date = date.shift(days=1)
 					code_index = 0

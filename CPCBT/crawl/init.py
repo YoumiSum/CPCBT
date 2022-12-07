@@ -14,6 +14,7 @@ def __init__(self, config):
 		self.ccxt_config = config["ccxt"]
 		self.timeframe = config["timeframe"]
 		self.exchanges = config["exchanges"]
+		self.retry = config["retry"]
 		self.step = config["step"]
 
 		config["log"]["steams"] = [steam.name for steam in config["log"].get("steams")]

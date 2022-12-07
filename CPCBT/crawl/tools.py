@@ -16,6 +16,7 @@ def config_tool(self, params):
 		"step": 60 * 24,                        # set fetch one day data by once (unit: hour)
 		"exchanges": ["binance", "okex"],       # set exchange to fetch data, the first one is default exchange,
 												# if not find data in the exchanges is used now, it will use next.
+		"retry": 10,
 		"ccxt": {
 			"countries": ['US', 'CN', 'EU'],    # set country default as US
 			"rateLimit": 1000,                  # set rate limit in milliseconds

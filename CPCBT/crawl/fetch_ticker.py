@@ -51,51 +51,66 @@ def fetch_ticker(self):
 		self.log.info(f"""[{code}] fetch ticker in {date.format('YYYY-MM-DD')}""", "")
 
 		url = f"https://data.binance.vision/data/futures/um/daily/trades/{code}/{code}-trades-{date.format('YYYY-MM-DD')}.zip"
-		resp = requests.get(url, proxies=self.ccxt_config['proxies'])
+		resp = None
+		try:
+			resp = requests.get(url, proxies=self.ccxt_config['proxies'])
+		except: ...
 		# check if resp fetch data success
-		if resp.status_code != 200:
+		if resp is None or resp.status_code != 200:
 			time.sleep(10)
 			count0 += 1
-			if count0 < 10:
+			if count0 < self.retry:
 				self.log.warning(f"""[{code}] ticker[{code}-trades-{date.format('YYYY-MM-DD')}.zip] don't exit or network error, try again[{count0}]""", "")
-				resp.close()
+				if resp is not None:
+					resp.close()
 				continue
 
 			else:
-				self.log.warning(f"""[{code}] ticker[{code}-trades-{date.format('YYYY-MM-DD')}.zip] don't exit or network error, try failed{count0}""", "\n")
+				self.log.warning(f"""[{code}] ticker[{code}-trades-{date.format('YYYY-MM-DD')}.zip] don't exit or network error, try failed[{count0}]""", "\n")
 				code_index += 1
 				count0 = 0
 				if code_index >= len(symbols):
 					date = date.shift(days=1)
 					code_index = 0
 
-				resp.close()
+				if resp is not None:
+					resp.close()
 				continue
 
 		# check data
 		checksum = hashlib.sha256(resp.content).hexdigest()
-		resp_cksum = requests.get(url + ".CHECKSUM", proxies=self.ccxt_config['proxies'])
+		resp_cksum = None
+		try:
+			resp_cksum = requests.get(url + ".CHECKSUM", proxies=self.ccxt_config['proxies'])
+		except: ...
+
 
 		# check if resp_cksum fetch check file[CHECKSUM] success
-		if resp_cksum.status_code != 200:
+		if resp_cksum is None or resp_cksum.status_code != 200:
 			time.sleep(10)
 			count1 += 1
-			if count1 < 10:
+			if count1 < self.retry:
 				self.log.warning(f"""[{code}] ticker[{code}-trades-{date.format('YYYY-MM-DD')}.zip.CHECKSUM] don't exit or network error, try again[{count1}]""", "")
-				resp.close()
-				resp_cksum.close()
+				if resp is not None:
+					resp.close()
+
+				if resp_cksum is not None:
+					resp_cksum.close()
 				continue
 
 			else:
-				self.log.warning(f"""[{code}] ticker[{code}-trades-{date.format('YYYY-MM-DD')}.zip.CHECKSUM] don't exit or network error, try failed{count1}""", "\n")
+				self.log.warning(f"""[{code}] ticker[{code}-trades-{date.format('YYYY-MM-DD')}.zip.CHECKSUM] don't exit or network error, try failed[{count1}]""", "\n")
 				code_index += 1
 				count1 = 0
 				if code_index >= len(symbols):
 					date = date.shift(days=1)
 					code_index = 0
 
-				resp.close()
-				resp_cksum.close()
+				if resp is not None:
+					resp.close()
+
+				if resp_cksum is not None:
+					resp_cksum.close()
 				continue
 
 		# check if file has error in route
@@ -104,22 +119,29 @@ def fetch_ticker(self):
 		if not (filename == f'{code}-trades-{date.format("YYYY-MM-DD")}.zip' and checksum == cksum):
 			time.sleep(10)
 			count2 += 1
-			if count2 < 10:
+			if count2 < self.retry:
 				self.log.warning(f"""[{code}] ticker in {date.format('YYYY-MM-DD')} fetch error, try again[{count2}]""", "")
-				resp_cksum.close()
-				resp.close()
+				if resp_cksum is not None:
+					resp_cksum.close()
+
+				if resp is not None:
+					resp.close()
+
 				continue
 
 			else:
-				self.log.warning(f"""[{code}] ticker in {date.format('YYYY-MM-DD')} fetch error, try failed{count2}""", "\n")
+				self.log.warning(f"""[{code}] ticker in {date.format('YYYY-MM-DD')} fetch error, try failed[{count2}]""", "\n")
 				code_index += 1
 				count2 = 0
 				if code_index >= len(symbols):
 					date = date.shift(days=1)
 					code_index = 0
 
-				resp_cksum.close()
-				resp.close()
+				if resp_cksum is not None:
+					resp_cksum.close()
+
+				if resp is not None:
+					resp.close()
 				continue
 
 		# reset if success
